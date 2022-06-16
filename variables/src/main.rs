@@ -10,15 +10,17 @@
     x = '6';
 } */
 
-// const MAX_POINT: u32 = 99_999;
-
-// fn main() {
-//     const MIN_POINT: u32 = 1_000;
-//     println!("the value of MAX_POINT is: {}", MAX_POINT);
-//     println!("the value of MIN_POINT is: {}", MIN_POINT);
-// }
+// const
+/* const MAX_POINT: u32 = 99_999;
 
 fn main() {
+    const MIN_POINT: u32 = 1_000;
+    println!("the value of MAX_POINT is: {}", MAX_POINT);
+    println!("the value of MIN_POINT is: {}", MIN_POINT);
+} */
+
+// Shadowing
+/* fn main() {
     let spaces = "    ";
     let spaces = spaces.len();
     println!("the length of spaces is:{}", spaces);
@@ -32,4 +34,15 @@ fn main() {
     }
 
     println!("The value of x is: {}", x);
+} */
+
+// error[E0282]: type annotations needed: consider giving `guess` a type
+/* fn main() {
+    let guess = "42".parse().expect("not a number");
+} */
+
+fn main() {
+    let c = 'z';
+    let z = 'ℤ';
+    let heart_eyed_cat = '😻';
 }
