@@ -41,8 +41,27 @@ fn main() {
     let guess = "42".parse().expect("not a number");
 } */
 
-fn main() {
+/* fn main() {
     let c = 'z';
     let z = 'ℤ';
     let heart_eyed_cat = '😻';
+} */
+
+// tuple
+/* fn main() {
+    let tup: (i32, f64, u8) = (500, 6.4, 1);
+    let tup = (500, 6.4, 1);
+
+    let (x, y, z) = tup;
+
+    println!("the value of tup is: {}, {}", x, tup.1);
+} */
+
+// array
+fn main() {
+    let a: [i32; 5] = [1, 2, 3, 4, 5];
+    let _a = [1, 2, 3, 4, 5];
+    let b = [5; 3];
+
+    println!("the value of array is: {}, {}", a[0], b[2]);
 }
