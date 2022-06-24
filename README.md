@@ -343,18 +343,205 @@ fn main() {
 
 - 在箭头 `->` 后声明函数返回值的类型，但不可以对返回值命名；
 
-- 在 Rust 中，函数的返回值就是函数体最后一个表达式的值；
+- **在 Rust 中，函数的返回值就是函数体最后一个表达式的值**；
 
 - 若想要提前返回，可以使用使用 `return` 关键字并指定一个值；
 
 - 大部分函数隐式的返回最后的表达式；
 
-- ```
+- ```rust
   fn plus_five(x: i32) -> i32 {
       // NOTE: there is no ';'
       x + 5
   }
   ```
+
+## 控制流
+
+### if 表达式
+
+- `if` 表达式允许根据条件执行不同的代码分支；
+
+- 与 JavaScript 的 `if` 表达式不同点在于：
+
+  - `if` 后跟的条件不需要用括号括起来；
+
+  - Rust 不会尝试自动地将非布尔值转换为布尔值，必须总是显式地使用布尔值作为 `if` 的条件；
+
+  - 例如：
+
+    ```rust
+    fn main() {
+        let number = 3;
+
+        if number < 5 {
+            println!("condition was true");
+        } else {
+            println!("condition was false");
+        }
+    }
+    ```
+
+- 可以将 `else if` 表达式与 `if` 和 `else` 组合来实现多重条件：
+
+  ```rust
+  fn main() {
+      let number = 6;
+
+      if number % 4 == 0 {
+          println!("number is divisible by 4");
+      } else if number % 3 == 0 {
+          println!("number is divisible by 3");
+      } else if number % 2 == 0 {
+          println!("number is divisible by 2");
+      } else {
+          println!("number is not divisible by 4, 3, or 2");
+      }
+  }
+  ```
+
+  - Rust 只会执行第一个条件为真的代码块，一旦它找到一个以后，不会检查剩下的条件；
+  - 如果使用了多于一个 else if 语句，建议使用 match；
+
+- 因为 `if` 是一个表达式，我们可以在 `let` 语句的右侧使用它：
+
+  ```rust
+  fn main() {
+      let condition = true;
+      let number = if condition { 5 } else { "six" };
+      println!("The value of number is: {}", number);  // 5
+
+      // `if` and `else` have incompatible types: expected integer, found `char` rustc(E0308)
+      let error = if condition { 5 } else { '6' };
+  }
+  ```
+
+  - `number` 变量将会绑定到表示 `if` 表达式结果的值上；
+  - 代码块的值是其最后一个表达式的值，而数字本身就是一个表达式；
+  - Rust 是强类型语言，在编译的时候就必须要知道变量的类型，所以这种写法时 if 后和 else 里面返回值的类型必须保持一致，否则会报错。每个可能成为结果的分支的返回值的类型必须是一样的
+
+### 循环
+
+#### loop
+
+- `loop` 关键字告诉 Rust 一遍又一遍地执行一段代码直到你明确要求停止；
+
+- 如果存在嵌套循环，`break` 和 `continue` 应用于此时最内层的循环：
+
+  - 循环中的 `break` 关键字来告诉程序何时停止循环；
+
+  - 循环中的 `continue` 关键字告诉程序跳过这个循环迭代中的任何剩余代码，并转到下一个迭代；
+
+  - 可以选择在一个循环上指定一个循环标签，loop label，然后将标签与 `break` 或 `continue` 一起使用，使这些关键字应用于已标记的循环而不是最内层的循环：
+
+    ```rust
+    fn main() {
+        let mut count = 0;
+
+        'counting_up: loop {
+            println!("count = {}", count);
+            let mut remaining = 10;
+
+            loop {
+                println!("remaining = {}", remaining);
+                if remaining == 9 {
+                    break;
+                }
+                if count == 2 {
+                    break 'counting_up;
+                }
+
+                remaining -= 1;
+            }
+
+            count += 1;
+        }
+
+        println!("End count = {}", count)
+    }
+    ```
+
+- loop 可以有返回值：
+
+  ```rust
+  fn main() {
+      let mut counter = 0;
+
+      let result = loop {
+          counter += 1;
+
+          if counter == 10 {
+              break counter * 2;
+          }
+      };
+
+      println!("The result is {}", result);  // 20
+  }
+  ```
+
+#### while
+
+- 每次执行循环体之前判断一次条件；
+
+- 这个循环类型可以通过组合 `loop`、`if`、`else` 和 `break` 来实现；
+
+- 例子：
+
+  ```rust
+  fn main() {
+      let mut number = 3;
+
+      while number != 0 {
+          println!("{}!", number);
+          number -= 1;
+      }
+
+      println!("LIFTOFF!!!");
+  }
+  ```
+
+#### for
+
+- `while` 循环容易出错且低效；
+
+  - `while` 循环有时使程序更慢，因为编译器增加了运行时代码来对每次循环进行条件检查。
+
+- 可以使用 `for` 循环来对一个集合的每个元素执行一些代码：
+
+  ```rust
+  fn main() {
+      let a = [10, 20, 30, 40, 50];
+      let mut index = 0;
+
+      while index < 5 {
+          println!("the value is: {}", a[index]);
+
+          index += 1;
+      }
+  }
+
+  // 用 for 重写 while
+  fn main() {
+      let a = [10, 20, 30, 40, 50];
+
+      for element in a {
+          println!("the value is: {}", element);
+      }
+  }
+  ```
+
+- 大部分 Rustacean 也会使用 `for` 循环，例如 `while` 中发射的例子：
+
+  ```rust
+  fn main() {
+      for number in (1..4).rev() {
+          println!("{}!", number);
+      }
+      println!("LIFTOFF!!!");
+  }
+  ```
+
+  - `Range`是标准库提供的类型，用来生成从一个数字开始到另一个数字之前结束的所有数字的序列。
 
 ## 注释
 
