@@ -925,4 +925,168 @@ fn takes_and_gives_back(a_string: String) -> String {
   println!("s2 is invalidate: {}", s2);  
   ```
 
+
+
+### 引用
+
++ 如果想要函数使用一个值但不获取所有权，可以使用**引用 - reference**；
+
++ 引用类似指针，它是一个地址，可以由此访问储存于该地址的属于其他变量的数据；
+
++ 与指针不同的是，引用确保指向某个特定类型的有效值；
+
++ 使用 `&` 符号表明引用，允许使用值但不获取其所有权：
+
+  ```rust
+  fn main() {
+      let s = String::from("hello");
+      let len = calculate_len(&s);
+      println!("The length of {} is {}", s, len);
+  }
   
+  fn calculate_len(some_string: &String) -> usize {
+      some_string.len()
+  }
+  ```
+
+  + `&s` 语法让我们创建一个指向值 `s` 的引用，但是并不拥有它；
+  + 因为并不拥有这个值的所用权，所以当引用停止使用时，它所指向的值也不会被丢弃；
+  + 例如，在 calculate_len 函数中，函数体的花括号结束处，s 移出作用域但其所指向的值不会被清理。
+
++ 我们将创建一个引用的行为称为**借用 - borrowing**。
+
+
+
+#### 不可变引用
+
++ 无法修改借用的变量；
+
++ 例如：
+
+  ```rust
+  fn changeError(some_string: &String) {
+      // error[E0596]: cannot borrow `*some_string` as mutable, as it is behind a `&` reference
+      some_string.push_str(", world");
+  }
+  ```
+
++ 正如变量默认是不可变的，引用也一样，默认不允许修改引用的值。
+
+
+
+#### 可变引用
+
++ 通过添加 `mut` 来创建可变引用；
+
++ 例如：
+
+  ```rust
+  fn main() {
+      let mut variable_s = String::from("hello");
+      change(&mut variable_s);
+      println!("The changed string is {}", variable_s);
+  }
+  
+  fn change(some_string: &mut String) {
+      some_string.push_str(", world");
+  }
+  ```
+
+  + 声明变量时将 `variable_s` 改为 `mut`；
+  + 调用 `change` 函数的地方创建一个可变引用 `&mut variable_s`；
+  + 函数签名改为接受一个可变引用 `some_string: &mut String`。
+
++ 限制：
+
+  + 在同一时间只能有一个对某一特定数据的可变引用：
+
+    ```rust
+    fn main() {
+        let mut s = String::from("hello");
+        let r1 = &mut s;
+        // error[E0499]: cannot borrow `s` as mutable more than once at a time
+        let r2 = &mut s;
+        println!("{}, {}", r1, r2);
+    }
+    ```
+
+    + 这个限制的好处是 Rust 可以在编译时就避免数据竞争；
+    + 数据竞争类似于竞态条件，它可由这三个行为造成：
+      - 两个或更多指针同时访问同一数据；
+      - 至少有一个指针被用来写入数据；
+      - 没有同步数据访问的机制。
+
+  + 可以通过创建新的作用域，来允许非同时的创建多个可变引用：
+
+    ```rust
+    fn main() {
+        let mut s = String::from("hello");
+        {
+            let r1 = &mut s;
+            println!("{}", r1);
+        }
+        let r2 = &mut s;
+        println!("{}", r2);
+    }
+    ```
+
+  + 不能同时拥有一个可变引用和一个不可变引用：
+
+    ```rust
+    fn main() {
+        let mut s = String::from("hello");
+        let r1 = &s;
+        let r2 = &s;
+        // error[E0502]: cannot borrow `s` as mutable because it is also borrowed as immutable
+        let r3 = &mut s;
+        println!("{}, {}, and {}", r1, r2, r3);
+    }
+    ```
+
+  + 一个引用的作用域从声明的地方开始一直持续到最后一次使用为止：
+
+    ```rust
+    fn main() {
+        let mut s = String::from("hello");
+        let r1 = &s;
+        let r2 = &s;
+        println!("{} and {}", r1, r2); // 此位置之后 r1 和 r2 不再使用，因此可以再成功声明一个 r3
+        let r3 = &mut s;
+        println!("{}", r3);
+    }
+    ```
+
+    + 因为最后一次使用不可变引用（`println!`)，发生在声明可变引用之前，所以以上代码是可以编译通过的；
+    + 不可变引用 `r1` 和 `r2` 的作用域在 `println!` 最后一次使用之后结束，这也是创建可变引用 `r3` 的地方，它们的作用域没有重叠，所以代码是可以编译的。
+
+
+
+#### 悬垂引用
+
++ 在具有指针的语言中，很容易通过释放内存时保留指向它的指针而错误地生成一个悬垂指针；
+
++ 所谓悬垂指针是其指向的内存可能已经被分配给其它持有者；
+
++ 在 Rust 中编译器确保引用永远也不会变成悬垂状态，当你拥有一些数据的引用，编译器确保数据不会在其引用之前离开作用域；
+
++ 当我们尝试创建一个悬垂引用时，Rust 会通过一个编译时错误来避免：
+
+  ```rust
+  // error[E0106]: missing lifetime specifier
+  fn dangle() -> &String {
+      let s = String::from("hello");
+      &s
+  }
+  ```
+
++ 解决：
+
+  ```rust
+  fn no_dangle() -> String {
+      let s = String::from("hello");
+      s
+  }
+  ```
+
+  + 所有权被移动出去，值没有被释放；
+
