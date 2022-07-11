@@ -832,9 +832,9 @@ Copy trait
 
 
 
-### 所有权与函数
+## 所有权与函数
 
-#### 参数
+### 参数
 
 + 将值传递给函数在语义上与给变量赋值相似；
 + 向函数传递值可能会移动或者复制，就像赋值语句一样。
@@ -888,7 +888,7 @@ fn makes_copy(some_integer: i32) {
 
 
 
-#### 返回值
+### 返回值
 
 + 返回值也可以转移所有权。
 
@@ -927,7 +927,7 @@ fn takes_and_gives_back(a_string: String) -> String {
 
 
 
-### 引用
+## 引用
 
 + 如果想要函数使用一个值但不获取所有权，可以使用**引用 - reference**；
 
@@ -957,7 +957,7 @@ fn takes_and_gives_back(a_string: String) -> String {
 
 
 
-#### 不可变引用
+### 不可变引用
 
 + 无法修改借用的变量；
 
@@ -974,7 +974,7 @@ fn takes_and_gives_back(a_string: String) -> String {
 
 
 
-#### 可变引用
+### 可变引用
 
 + 通过添加 `mut` 来创建可变引用；
 
@@ -1061,7 +1061,7 @@ fn takes_and_gives_back(a_string: String) -> String {
 
 
 
-#### 悬垂引用
+### 悬垂引用
 
 + 在具有指针的语言中，很容易通过释放内存时保留指向它的指针而错误地生成一个悬垂指针；
 
@@ -1090,3 +1090,138 @@ fn takes_and_gives_back(a_string: String) -> String {
 
   + 所有权被移动出去，值没有被释放；
 
+
+
+## Slice 类型
+
++ slice 允许你引用集合中一段连续的元素序列，而不用引用整个集合；
++ slice 是一类引用，所以它没有所有权。
+
+
+
+一个有 bug 的例子：
+
+```rust
+fn main() {
+    let mut s = String::from("hello world");
+    let word = first_word(&s);
+    s.clear();
+    println!("{}", word); // 5
+}
+
+fn first_word(s: &String) -> usize {
+    let bytes = s.as_bytes();
+    for (i, &item) in bytes.iter().enumerate() {
+        if item == b' ' {
+            return i;
+        }
+    }
+
+    s.len()
+}
+```
+
++ 清空了字符串 `s`，但 `word` 依旧是5，毫无意义；
++ 因为 `first_word` 返回了一个独立的 `usize`，它只在 `&String` 的上下文中才是一个有意义的数字。因为它是一个与 `String` 相分离的值，无法保证将来它仍然有效；
++ 这个程序编译时没有任何错误，而且在调用 `s.clear()` 之后使用 `word` 也不会出错。因为 `word` 与 `s` 状态完全没有联系，所以 `word `仍然包含值 `5`；
++ 我们不得不时刻担心 `word` 的索引与 `s` 中的数据不再同步。
+
+
+
+### 字符串 Slice
+
++ 基础语法：
+
+  ```rust
+  &String[starting_index..ending_index]
+  ```
+
+  + 其中 `starting_index` 是 slice 的第一个位置；
+
+  + `ending_index` 则是 slice 最后一个位置的后一个值；
+
+  + 在其内部，slice 的数据结构存储了 slice 的开始位置和长度，长度对应于 `ending_index` 减去 `starting_index` 的值；
+
+  + 例如
+
+    ```rust
+    let s = String::from("hello world");
+    
+    let hello = &s[0..5];
+    let world = &s[6..11];
+    ```
+
++ 语法糖：
+
+  ```rust
+  // 等价
+  let hello = &s[0..5];
+  let hello = &s[..2];
+  
+  let world = &s[6..11];
+  let world = &s[3..s.len()];
+  let world = &s[3..];
+  
+  let whole = &s[..];
+  ```
+
++ 改写 bug 例子：
+
+  ```rust
+  fn main() {
+      let mut s = String::from("hello world");
+      let word = first_word(&s);
+      // error[E0502]: cannot borrow `s` as mutable because it is also borrowed as immutable
+      s.clear();
+      println!("{}", word);
+  }
+  
+  fn first_word(s: &String) -> &str {
+      let bytes = s.as_bytes();
+      for (i, &item) in bytes.iter().enumerate() {
+          if item == b' ' {
+              return &s[..i];
+          }
+      }
+  
+      &s[..]
+  }
+  ```
+
+  + 编译时有报错提示了。
+
+
+
+**字符串字面值就是 slice：**
+
+  ```rust
+  let s = "Hello, world!";
+  ```
+
+  + 这里 s 的类型就是 `&str`，是一个指向二进制程序特定位置的 slice；
+  + 因为 `&str` 是一个不可变引用，所以字符串字面值是不可变的。
+
+
+
+**字符串 slice 作为参数：**
+
+```rust
+fn first_word(s: &String) -> &str { ... }
+// 改为
+fn first_word(s: &str) -> &str { ... }
+```
+
++ 如果有一个字符串 slice，可以直接传递它；
++ 如果有一个 `String`，则可以传递整个 `String` 的 slice 或对 `String` 的引用;
++ 定义一个获取字符串 slice 而不是 `String` 引用的函数，使得我们的 API 更加通用并且不会丢失任何功能。
+
+
+
+### 数组 Slice
+
+```rust
+let a = [1, 2, 3, 4, 5];
+let slice = &a[1..3];
+```
+
++ 跟字符串 slice 的工作方式一样，通过存储第一个集合元素的引用和一个集合总长度。
