@@ -1225,3 +1225,184 @@ let slice = &a[1..3];
 ```
 
 + 跟字符串 slice 的工作方式一样，通过存储第一个集合元素的引用和一个集合总长度。
+
+
+
+# struct 结构体
+
++ struct 是自定义的数据类型，为相关联的值命名，打包成有意义的组合；
++ 和元组一样，结构体的每一部分可以是不同类型；
++ 不同于元组，结构体需要命名各部分数据以便能清楚的表明其值的意义。
+
+
+
+## 定义与实例化 struct
+
+**定义：**
+
++ 使用 `struct` 关键字并为整个结构体提供一个名字；
+
++ 结构体的名字需要描述它所组合的数据的意义；
+
++ 在大括号中，定义每一部分数据的名字和类型；
+
++ 例子：
+
+  ```rust
+  struct Use {
+      active: bool,
+      username: String,
+      email: String,
+      sign_in_count: u64,
+  }
+  ```
+
+
+
+**实例化：**
+
++ 创建一个实例需要以结构体的名字开头；
+
++ 接着在大括号中使用 `key: value` 键-值对的形式提供字段，其中 key 是字段的名字，value 是需要存储在字段中的数据值；
+
++ 实例中字段的顺序不需要和它们在结构体中声明的顺序一致；
+
++ 一旦 struct 的实例是可变的，实例中所有的字段都是可变的，Rust 并不允许只将某个字段标记为可变；
+
++ 使用点标记法取值和赋值；
+
++ 例子：
+
+  ```rust
+  fn main() {
+      let mut user1 = User {
+          email: String::from("user1@example.com"),
+          username: String::from("user1username"),
+          active: true,
+          sign_in_count: 1,
+      };
+  
+      let email = user1.email;
+      user1.email = String::from("user1anothere@example.com");
+      println!(
+          "user1 prev email:{}, user1 cur email:{}",
+          email, user1.email
+      );
+  }
+  ```
+
+
+
+**作为函数返回值：**
+
++ 可以在函数体的最后一个表达式中构造一个结构体的新实例，来隐式地返回这个实例；
+
++ 当参数名与字段名完全相同时，可以使用字段初始化简写语法；
+
++ 例子：
+
+  ```rust
+  fn build_user(email: String, username: String) -> User {
+      User {
+          active: true,
+          username,
+          email,
+          sign_in_count: 1,
+      }
+  }
+  
+  fn main() {
+      let user2 = build_user(
+          String::from("user2@example.com"),
+          String::from("user2username"),
+      );
+      println!("user2 email:{}", user2.email);
+  }
+  ```
+
+
+
+**更新语法：**
+
++ 使用旧实例的大部分值，但改变其部分值来创建一个新的结构体实例；
+
++ `..` 语法指定了剩余未显式设置值的字段应有与给定实例对应字段相同的值；
+
++ 例子：
+
+  ```rust
+  fn main() {
+      let user2 = User {
+          active: user1.active,
+          username: user1.username,
+          email: String::from("user2@example.com"),
+          sign_in_count: user1.sign_in_count,
+      };
+    
+      // 等价于
+      let user2 = User {
+          email: String::from("user2@example.com"),
+          ..user1
+      };
+  }
+  ```
+
+  + 与 JS 语法不同，`..user1` 必须放在最后，以指定其余的字段应从 `user1` 的相应字段中获取其值。
+  
++ 结构更新语法就像带有 `=` 的赋值，因为它移动了数据；
+  
+  + 例如：
+  
+    ```rust
+    println!("user1 email:{}", user1.email);
+    
+    // error[E0382]: borrow of moved value: `user1.username`
+    println!("user1 username:{}", user1.username);
+    ```
+  
+    + 在这个例子中，在创建 `user2` 后不能再使用 `user1.username`，因为 `user1` 的 `username` 字段中的 `String` 被移到 `user2` 中；
+    + 如果我们给 `user2` 的 `email` 和 `username` 都赋予新的 `String` 值，从而只使用 `user1` 的 `active` 和 `sign_in_count` 值，那么 `user1` 在创建 `user2` 后仍然有效，`active` 和 `sign_in_count` 的类型是实现 `Copy trait` 的类型。
+
+
+
+## tuple struct
+
++ 给整个 tuple 取一个名字，并使其成为与其他 tuple 不同的类型；
+
++ 例子：
+
+  ```rust
+  struct Color(i32, i32, i32);
+  struct Point(i32, i32, i32);
+  
+  fn main() {
+      let black = Color(0, 0, 0);
+      let origin = Point(0, 0, 0);
+    
+      println!("color[0]: {}", color.0);
+      println!("point[0]: {}", point.0);
+  }
+  ```
+
+  + 注意 `black` 和 `origin` 值的类型不同，因为它们是不同的元组结构体的实例；
+  + 你定义的每一个结构体有其自己的类型，即使结构体中的字段有着相同的类型；
+
++ tuple struct 实例类似于 tuple，可以将其解构为单独的部分，也可以使用 `.` 后跟索引来访问单独的值。
+
+
+
+## Unit-Like struct
+
++ 可以定义一个没有任何字段的 struct；
+
++ 想要在某个类型上实现 trait 但不需要在类型中存储数据；
+
++ 例子：
+
+  ```rust
+  struct AlwaysEqual;
+  
+  fn main() {
+      let subject = AlwaysEqual;
+  }
+  ```
