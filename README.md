@@ -1406,3 +1406,94 @@ let slice = &a[1..3];
       let subject = AlwaysEqual;
   }
   ```
+
+
+
+## 方法
+
++ 方法与函数类似：
+  + 它们使用 `fn` 关键字和名称声明；
+  + 可以拥有参数和返回值；
+  + 同时包含在某处调用该方法时会执行的代码。
++ 与函数是不同的：
+  + 方法在 struct、enum、trait 的上下文中被定义；
+  + 方法的第一个参数总是 `self`，表示调用该方法的结构体实例。
+
+
+
+### 定义
+
++ 在 `impl` 块中定义方法，将函数定义于 strct 的上下文中，这个 `impl` 块中的所有内容都将与 strct 类型相关联；
+
++ `&self` 实际上是 `self: &Self` 的缩写；
+
+  + 在一个 `impl` 块中，`Self` 类型是 `impl` 块的类型的别名；
+  + 方法的第一个参数必须有一个名为 `self` 的`Self` 类型的参数，所以 Rust 让你在第一个参数位置上只用 `self` 这个名字来缩写；
+  + 方法可以选择获得 `self` 的所有权，或者不可变地借用 `self`，或者可变地借用 `self`，就跟其他参数一样。
+
++ 例子：
+
+  ```rust
+  #[derive(Debug)]
+  struct Rectangle {
+      width: u32,
+      height: u32,
+  }
+  
+  impl Rectangle {
+      fn area(&self) -> u32 {
+          self.width * self.height
+      }
+  }
+  
+  fn main() {
+      let rect1 = Rectangle {
+          width: 30,
+          height: 50,
+      };
+  
+      println!(
+          "The area of the rectangle is {} square pixels.",
+          rect1.area()
+      );
+  }
+  ```
+
++ 除了 `self`，方法可以定义其他参数：
+
+  ```rust
+  impl Rectangle {
+      fn can_hold(&self, other: &Rectangle) -> bool {
+          self.width > other.width && self.height > other.height
+      }
+  }
+  ```
+
+  
+
+### 关联函数
+
++ 所有在 `impl` 块中定义的函数被称为 **关联函数**，因为它们与 `impl` 后面命名的类型相关；
+
++ 可以定义不以 `self` 为第一参数的关联函数，因为它们并不作用于一个结构体的实例，因此不是方法；
+
++ 例如在 `String` 类型上定义的 `String::from` 函数；
+
++ 不是方法的关联函数经常被用作返回一个结构体新实例的构造函数：
+
+  ```rust
+  impl Rectangle {
+      fn square(size: u32) -> Rectangle {
+          Rectangle {
+              width: size,
+              height: size,
+          }
+      }
+  }
+  
+  fn main {
+    let s = Rectangle::square(16);
+  }
+  ```
+
++ 每个结构体都允许拥有多个 `impl` 块。
