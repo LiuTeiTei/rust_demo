@@ -222,12 +222,16 @@ Book:
   - 从 U+0000 到 U+D7FF，以及 U+E000 到 U+10FFFF 在内的值。
 - 四个字节大小。
 
+
+
 ### 复合类型
 
 - 可以将多个值组合成一个类型；
 - Rust 有两个原生的复合类型：
   - 元组（tuple）；
   - 数组（array）。
+
+
 
 #### 元组类型
 
@@ -254,6 +258,8 @@ fn main() {
     println!("the value of tup is: {}, {}", x, tup.1);
 }
 ```
+
+
 
 #### 数组类型
 
@@ -291,6 +297,8 @@ fn main() {
     println!("the value of array is: {}, {}", a[0], b[2]);
 }
 ```
+
+
 
 ## 函数
 
@@ -1236,7 +1244,7 @@ let slice = &a[1..3];
 
 
 
-## 定义与实例化 struct
+## 定义与实例化
 
 **定义：**
 
@@ -1409,7 +1417,7 @@ let slice = &a[1..3];
 
 
 
-## 方法
+## 定义结构体方法
 
 + 方法与函数类似：
   + 它们使用 `fn` 关键字和名称声明；
@@ -1497,3 +1505,255 @@ let slice = &a[1..3];
   ```
 
 + 每个结构体都允许拥有多个 `impl` 块。
+
+
+
+# 枚举
+
++ enums
+
++ 枚举允许你通过列举可能的成员 variants 来定义一个类型；
++ 枚举是一个不同于结构体的**定义自定义数据类型**的方式；
+
+
+
+## 定义
+
++ 定义：
+
+  ```rust
+  enum IpAddrKind {
+      V4,
+      V6,
+  }
+  ```
+  
++ 取值：
+  
+  ```rust
+  let four = IpAddrKind::V4;
+  let six = IpAddrKind::V6;
+  ```
+  
+  + 枚举的成员位于其标识符的命名空间中，并使用 `::` 分开；
+  
++ 和结构体结合使用：
+
+
+  ```rust
+  fn main() {
+      struct IpAddr {
+          kind: IpAddrKind,
+          address: String,
+      }
+  
+      let home = IpAddr {
+          kind: IpAddrKind::V4,
+          address: String::from("127.0.0.1"),
+      };
+      let loopback = IpAddr {
+          kind: IpAddrKind::V6,
+          address: String::from("::1"),
+      };
+  }
+  ```
+
++ 有一种更简洁的方式来表达相同的概念：
+
+  ```rust
+  enum IpAddr {
+      V4(String),
+      V6(String),
+  }
+  
+  let home = IpAddr::V4(String::from("127.0.0.1"));
+  let loopback = IpAddr::V6(String::from("::1"));
+  ```
+
+  + 仅仅使用枚举并将数据直接放进每一个枚举成员，而不是将枚举作为结构体的一部分，这样就不需要一个额外的结构体了；
+
+  + 每一个我们定义的枚举成员的名字也变成了一个构建枚举的实例的函数；
+
+  + 可以将任意类型的数据放入枚举成员中：例如字符串、数字类型、结构体，甚至可以包含另一个枚举：
+
+    ```rust
+    enum IpAddr {
+        V4(u8, u8, u8, u8),
+        V6(String),
+    }
+    
+    let home = IpAddr::V4(127, 0, 0, 1);
+    let loopback = IpAddr::V6(String::from("::1"));
+    ```
+
+  + 可以参考官方的标准库是如何定义 `IpAddr` 的：[std::net::IpAddr](https://doc.rust-lang.org/std/net/enum.IpAddr.html) 
+
++ 关联值的枚举的方式和定义多个不同类型的结构体的方式很相像：
+
+  ```rust
+  enum Message {
+      Quit,
+      Move { x: i32, y: i32 },
+      Write(String),
+      ChangeColor(i32, i32, i32),
+  }
+  
+  /*  类似的  */
+  
+  struct QuitMessage; // 类单元结构体
+  struct MoveMessage {
+      x: i32,
+      y: i32,
+  }
+  struct WriteMessage(String); // 元组结构体
+  struct ChangeColorMessage(i32, i32, i32); // 元组结构体
+  
+  ```
+
+  + 使用枚举可以将被组合在一起位于 `Message` 类型下。
+
++ 与结构体类似，枚举可以使用 `impl` 来定义方法：
+
+  ```rust
+  fn main() {
+      impl Message {
+          fn call(&self) {
+              // ...
+          }
+      }
+  
+      let m = Message::Write(String::from("hello"));
+      m.call();
+  }
+  ```
+
+
+
+## Option
+
++ Rust 并没有很多其他语言中有的空值功能，Null，但 Rust 有一个可以编码存在或不存在概念的枚举，这个枚举是 `Option<T>`；
+
++ `Option` 是[标准库](https://doc.rust-lang.org/std/option/enum.Option.html)定义的另一个枚举，表示一个值要么有值要么没值：
+
+  ```rust
+  // 官方定义
+  enum Option<T> {
+      None,
+      Some(T),
+  }
+  
+  // 例子
+  fn main() {
+      let some_number = Some(5);
+      let absent_number: Option<i32> = None;
+  }
+  ```
+
+  + `Option<T>` 枚举是被包含在了 prelude 之中，不需要将其显式引入作用域；
+  + 其成员不需要 `Option::` 前缀，可以直接使用 `Some` 和 `None`。
+
++  `Option<T>` 和 `T`是不同的类型：
+
+  ```rust
+  // error[E0277]: cannot add `Option<i8>` to `i8`
+  let x: i8 = 8;
+  let y: Option<i8> = Some(8);
+  let sum = x + y;
+  ```
+
+  + 当在 Rust 中拥有一个像 `i8` 这样类型的值时，编译器确保它总是有一个有效的值，可以直接使用而无需做空值检查；
+  + 当使用 `Option<i8>` 的时候需要担心可能没有值，编译器会确保我们在使用值之前处理了为空的情况；
+  + 在对 `Option<T>` 进行 `T` 的运算之前必须将其转换为 `T`。
+
++ 为了拥有一个可能为空的值，必须要显式的将其放入对应类型的 `Option<T>` 中。当使用这个值时，必须明确的处理值为空的情况，限制空值的泛滥以增加 Rust 代码的安全性；
+
++ 为了使用 `Option<T>` 值，需要编写处理每个成员的代码，`match` 表达式可以做到。
+
+
+
+## match
+
++ `match` 表达式是一个处理枚举的控制流结构，它会根据枚举的成员运行不同的代码，这些代码可以使用匹配到的值中的数据；
+
++ `match` 可由字面值、变量、通配符和许多其他内容构成；
+
++ `match` 确保了所有可能的情况都得到处理；
+
++ 例子：
+
+  ```rust
+  enum Coin {
+      Penny,
+      Nickel,
+      Dime,
+      Quarter,
+  }
+  
+  fn value_in_cents(coin: Coin) -> u8 {
+      match coin {
+          Coin::Penny => 1,
+          Coin::Nickel => 5,
+          Coin::Dime => 10,
+          Coin::Quarter => 25,
+      }
+  }
+  ```
+
+  + 每个分支相关联的代码是一个表达式，而表达式的结果值将作为整个 `match` 表达式的返回值；
+  + 每个分支可返回任意类型。
+
++ `match` 可以从枚举成员中提取值：
+
+  ```rust
+  enum Coin {
+      Penny,
+      Nickel,
+      Dime,
+      Quarter(ChinaProvince),
+  }
+  
+  fn value_in_cents(coin: Coin) -> u8 {
+      match coin {
+          Coin::Penny => 1,
+          Coin::Nickel => 5,
+          Coin::Dime => 10,
+          Coin::Quarter(province) => {
+              let status = province;
+              25
+          }
+      }
+  }
+  ```
+
+
+
+### 匹配 `Option<T>` 
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
