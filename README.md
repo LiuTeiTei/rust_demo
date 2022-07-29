@@ -1539,7 +1539,6 @@ let slice = &a[1..3];
   
 + 和结构体结合使用：
 
-
   ```rust
   fn main() {
       struct IpAddr {
@@ -1677,9 +1676,9 @@ let slice = &a[1..3];
 
 + `match` 可由字面值、变量、通配符和许多其他内容构成；
 
-+ `match` 确保了所有可能的情况都得到处理；
++ Rust 中的匹配是穷尽的，必须穷举到最后的可能性来使代码有效，`match` 确保了所有可能的情况都得到处理；
 
-+ 例子：
++ 基本使用：
 
   ```rust
   enum Coin {
@@ -1724,10 +1723,78 @@ let slice = &a[1..3];
       }
   }
   ```
+  
++ 匹配 `Option<T>` ：
 
+  ```rust
+  fn plus_one(x: Option<i32>) -> Option<i32> {
+      match x {
+          None => None,
+          Some(i) => Some(i + 1),
+      }
+  }
+  
+  let five = Some(5);
+  let absent_number: Option<i32> = None;
+  let six = plus_one(some_number);
+  let none = plus_one(absent_number);
+  ```
 
+  + `i` 绑定了 `Some` 中包含的值。
+  
++ 通配符模式，对一些特定的值采取特殊操作，而对其他的值采取默认操作：
 
-### 匹配 `Option<T>` 
+  ```rust
+  match dice_roll {
+      3 => add_fancy_hat(),
+      7 => remove_fancy_hat(),
+      other => move_player(other),
+  }
+  ```
+
+  + 最后一个模式将匹配所有未被特殊列出的值；
+  + 必须将通配分支放在最后，因为模式是按顺序匹配的。
+
++ 匹配任意值而不绑定到该值：
+
+  ```rust
+  match dice_roll {
+      3 => add_fancy_hat(),
+      7 => remove_fancy_hat(),
+      _ => reroll(),
+  }
+  ```
+
+  + 在最后一个分支中明确地忽略了其他的值；
+  + 也可以用 `_ => ()` 表示不运行任何代码。
+
++ `if let` 语法来处理只匹配一个模式的值而忽略其他模式的情况：
+
+  ```rust
+  fn main() {
+      let config_max = Some(3u8);
+      match config_max {
+          Some(max) => println!("The maximum is configured to be {}", max),
+          _ => (),
+      }
+      // 行为一致
+      if let Some(max) = config_max {
+          println!("The maximum is configured to be {}", max);
+      }
+    
+      let mut count = 0;
+      if let Coin::Quarter(state) = coin {
+          println!("State quarter from {:?}!", state);
+      } else {
+          count += 1;
+      }
+  }
+  ```
+
+  + `if let` 语法获取通过等号分隔的一个模式和一个表达式，模式是 `Some(max)`，`max` 绑定为 `Some` 中的值；
+  + 会失去 `match` 强制要求的穷尽性检查；
+  + 可以在 `if let` 中包含一个 `else`，`else` 块中的代码与 `match` 表达式中的 `_` 分支块中的代码相同。
+
 
 
 

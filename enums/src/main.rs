@@ -65,6 +65,16 @@ fn main() {
 
     value_in_cents(Coin::Dime);
     value_in_cents(Coin::Quarter(ChinaProvince::BeiJing));
+
+    let config_max = Some(3u8);
+    match config_max {
+        Some(max) => println!("The maximum is configured to be {}", max),
+        _ => (),
+    }
+    // 行为一致
+    if let Some(max) = config_max {
+        println!("The maximum is configured to be {}", max);
+    }
 }
 
 fn route(ip_kind: &IpAddrKind) {
