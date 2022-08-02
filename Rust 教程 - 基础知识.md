@@ -1,21 +1,3 @@
-# Link
-
-- [rust](https://www.rust-lang.org/)
-
-- [crate](https://crates.io/)
-
-Video：
-
-- [BiliBili: Rust 编程语言入门教程（Rust 语言/Rust 权威指南配套）](https://www.bilibili.com/video/BV1hp4y1k7SV?spm_id_from=333.337.search-card.all.click)
-
-Book:
-
-- [English](https://doc.rust-lang.org/book/)
-- [Chinese](https://kaisery.github.io/trpl-zh-cn/)
-- [Demo](https://doc.rust-lang.org/stable/rust-by-example/)
-
-
-
 # 变量和可变性
 
 ## 不可变变量
@@ -1824,11 +1806,231 @@ let slice = &a[1..3];
 
 
 
+# 模块系统
+
++ Packages： Cargo 的一个功能，允许构建、测试、分享 crate；
++ Crates ：一个模块的树形结构，它形成了 library 或 binary；
++ Modules 和 use： 允许你控制代码的组织、作用域、私有路径；
++ Path：为 struct、function、module 等项命名的方式。
 
 
 
+## Packages 和 Crates
+
++ crate 要么是一个 library 库，要么是一个 binary 二进制项；
++ crate root 是一个源文件，Rust 编译器以它为起始点，并构成你的 crate 的根 module；
++ package 提供一系列功能的一个或者多个 crate，一个包会包含有一个 *Cargo.toml* 文件，阐述如何去构建这些 crate；
+  + package 只能包含 0-1 个 library crate；
+  + package 可以包含任意数量的 binary crate；
+  + package 至少必须包含一个 carte。
++ crate 会将一个作用域内的相关功能分组到一起，便于该功能在多个项目之间共享；
+  + 例如 `rand` crate 提供的所有功能都可以通过该 crate 的名字：`rand` 进行访问。
++ 将一个 crate 的功能保持在其自身的作用域中，可以防止潜在的冲突。
 
 
+
+**创建包时的操作**
+
+```bash
+$ cargo new my-project
+     Created binary (application) `my-project` package
+$ ls my-project
+Cargo.toml
+src
+$ ls my-project/src
+main.rs
+
+------------------------ 分割线 ------------------------
+
+$ cargo new --lib my-project
+     Created library `my-project` package
+$ ls my-project
+Cargo.toml
+src
+$ ls my-project/src
+lib.rs
+```
+
++ Cargo 会给我们的包创建一个 *Cargo.toml* 文件；
+
++ 默认是创建一个 binary crate；
+
++ 可以通过 `--lib` 参数来创建 library crate。
+
+  
+
+**Cargo 默认规则**
+
++ *src/main.rs* 是一个与 package 同名的 binary crate 的 crate 根；
++ *src/lib.rs* 是一个与 package 同名的 library crate 的 crate 跟；
++ crate 根文件将由 Cargo 传递给 `rustc` 来实际构建 library 或者 binary；
++ 一个 package 可以同时含有 *src/main.rs* 和 *src/lib.rs*，一个binary crate，一个library crate，且名字都与包相同；
++ 将文件放在 *src/bin* 目录下，一个 package 可以拥有多个 binary crate，每个 *src/bin* 下的文件都会被编译成一个独立的 binary crate。
+
+
+
+## Module
+
++ module 可以将一个 crate 中的代码进行分组，以提高可读性与重用性；
++ module 可以控制 item 的私有性；
+
+
+
+**创建 module**
+
++ 使用 `mod` 关键字创建：
+
+  ```rust
+  mod front_of_house {
+      mod hosting {
+          fn add_to_waitlist() {}
+  
+          fn seat_at_table() {}
+      }
+  
+      mod serving {
+          fn take_order() {}
+  
+          fn serve_order() {}
+  
+          fn take_payment() {}
+      }
+  }
+  ```
+
++ 可以嵌套定义；
+
++ 可以包含其他项的定义，比如 struct、enum、const、trait、function 等；
+
+
+
+**module tree**
+
++ `src/main.rs` 和 `src/lib.rs` 叫做 crate 根；
+
++ 这两个文件的内容都分别在 crate 模块结构的根组成了一个名为 `crate` 的模块，也就是 module tree：
+
+  ```
+  crate
+   └── front_of_house
+       ├── hosting
+       │   ├── add_to_waitlist
+       │   └── seat_at_table
+       └── serving
+           ├── take_order
+           ├── serve_order
+           └── take_payment
+  ```
+
++ 这个树展示了 module 的嵌套、兄弟、子、父等关系
+
++ 整个 module tree 都植根于名为 `crate` 的隐式 module 下；
+
+
+
+**私有边界**
+
++ module 不仅可以组织代码，还可以定义私有边界，这条界线不允许外部代码了解、调用和依赖被封装的实现细节；
+
++ 如果想要创建一个私有 function 或 struct，可以将其放入模块；
+
++ Rust 中默认所有 item（函数、方法、结构体、枚举、模块和常量）都是私有的；
+
++ 父 module 中的 item 不能使用子 module 中的私有 item，但是子模块中的 item 可以使用所有祖先 module 中的 item，这是因为子 module 封装并隐藏了它们的实现详情，但是子 module 可以看到它们定义的上下文；
+
++ 使用 `pub` 关键字将某些 item 标记为共有的：
+
+  ```rust
+  mod front_of_house {
+      pub mod hosting {
+          pub fn add_to_waitlist() {}
+      }
+  }
+  ```
+
++ 如果对 struct 定义的时候使用了 `pub` ，这个 struct 会变成公有的，但是内部字段仍然是私有的，需要单独设置：
+
+  ```rust
+  mod back_of_house {
+      pub struct Breakfast {
+          pub toast: String,
+          seasonal_fruit: String,
+      }
+  
+      impl Breakfast {
+          pub fn summer(toast: &str) -> Breakfast {
+              Breakfast {
+                  toast: String::from(toast),
+                  seasonal_fruit: String::from("peaches"),
+              }
+          }
+      }
+  }
+  
+  pub fn eat_at_restaurant() {
+      let mut meal = back_of_house::Breakfast::summer("Rye");
+      meal.toast = String::from("Wheat");
+      println!("I'd like {} toast please", meal.toast);
+  
+      // field `seasonal_fruit` of struct `back_of_house::Breakfast` is private
+      // meal.seasonal_fruit = String::from("blueberries");
+  }
+  ```
+
++ 将 enum 设为公有，则它的所有成员都将变为公有：
+
+  ```rust
+  mod back_of_house {
+      pub enum Appetizer {
+          Soup,
+          Salad,
+      }
+  }
+  
+  pub fn eat_at_restaurant() {
+      let order1 = back_of_house::Appetizer::Soup;
+      let order2 = back_of_house::Appetizer::Salad;
+  }
+  ```
+
++ 可以使用 `super` 关键字来访问父 module 路径中的内容，类似于文件系统中以 `..` 开头的语法：
+
+  ```rust
+  fn serve_order() {}
+  
+  mod back_of_house {
+      fn fix_incorrect_order() {
+          cook_order();
+          super::serve_order();
+      }
+  
+      fn cook_order() {}
+  }
+  ```
+
+  
+
+## Path
+
++ 为了在 module 中找到某个 item，需要使用 path；
+
++ path 有两种形式：
+
+  + 绝对路径，从 crate 根开始，以 crate 名或者字面值 `crate` 开头，例如：
+
+    ```rust
+    crate::front_of_house::hosting::add_to_waitlist();
+    ```
+
+  + 相对路径，从当前模块开始，以 `self`、`super` 或当前模块的标识符开头，例如：
+
+    ```rust
+    front_of_house::hosting::add_to_waitlist();
+    ```
+
+  + path 至少由一个标识符组成，标识符之间使用 `::` 分隔。
+
++ 选择使用相对路径还是绝对路径，取决于你的项目是更倾向于将项的定义代码与使用该项的代码分开来移动，还是一起移动。
 
 
 
