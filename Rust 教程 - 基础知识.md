@@ -1869,6 +1869,31 @@ lib.rs
 
 
 
+**引入外部 package**
+
++ 在 *Cargo.toml* 文件中添加依赖的包，Rust 会默认从 https://crates.io/ 中下载包；
+
++ 使用 `use` 关键字引入；
+
++ ```rust
+  // Cargo.toml
+  [dependencies]
+  rand = "0.8.3"
+  
+  // main.rs
+  use rand::Rng;
+  fn main() {
+      let secret_number = rand::thread_rng().gen_range(1..=100);
+  }
+  ```
+
++ 标准库 std 也会被当作外部包；
+
+  + 不需要在 *Cargo.toml* 文件中添加依赖；
+  + 但需要使用 `use` 关键字引入
+
+
+
 ## Module
 
 + module 可以将一个 crate 中的代码进行分组，以提高可读性与重用性；
@@ -1995,6 +2020,15 @@ lib.rs
 
 
 
+**将模块拆分成多个文件**
+
++ 模块定义时，如果模块后面不是 `{}` 而是 `;` 
+  + Rust 会从与模块同名的文件中加载内容；
+  + 模块树的结构不会变化；
+  + 文件夹层级和模块树层级需要保持一致；
+
+
+
 ## Path
 
 + 为了在 module 中找到某个 item，需要使用 path；
@@ -2040,6 +2074,8 @@ lib.rs
 
 **use**
 
++ 通过 `use` 引入作用域的路径也会检查私有性；
+
 + 可以使用 `use` 关键字将路径一次性引入作用域，然后调用该路径中的项，就如同它们是本地项一样：
 
   ```rust
@@ -2060,6 +2096,8 @@ lib.rs
 
   ```rust
   use self::front_of_house::hosting;
+  // or
+  use front_of_house::hosting;
   
   pub fn eat_at_restaurant() {
       hosting::add_to_waitlist();
@@ -2068,15 +2106,54 @@ lib.rs
 
 + 在作用域中增加 `use` 和路径类似于在文件系统中创建软连接；
 
-+ 通过 `use` 引入作用域的路径也会检查私有性，同其它路径一样；
-
 + 习惯用法：
 
   + 使用 `use` 将函数的父模块引入作用域，而不是直接引用到具体函数。这样可以清晰地表明函数不是在本地定义的，同时使完整路径的重复度最小化；
-  + 使用 `use` 引入结构体、枚举和其他项时，习惯是指定它们的完整路径；
-  + 
+  + 使用 `use` 引入结构体、枚举和其他项时，习惯是指定它们的完整路径。除非当项名称相同时，引用父模块。
+  
++ 使用 `use` 引入作用域后，该路径在此作用域默认是私有的，可以使用 `pub use` 重导出；
 
++ 使用嵌套路径消除大量的 use 行：
 
+  ```rust
+  use std::cmp::Ordering;
+  use std::io;
+  // 等价于
+  use std::{cmp::Ordering, io};
+  
+  use std::io;
+  use std::io::Write;
+  // 等价于
+  use std::io::{self, Write};
+  ```
+
+  
+
+**as**
+
++  `as` 关键字可以指定一个新的本地名称或者别名：
+
+  ```rust
+  use std::fmt::Result;
+  use std::io::Result as IoResult;
+  
+  fn function1() -> Result {
+      // --snip--
+  }
+  
+  fn function2() -> IoResult<()> {
+      // --snip--
+  }
+  ```
+
+  
+
+**通配符 ***
+
++ 使用 `*` 将一个路径下所有公有项引入作用域；
++ 应用场景：
+  + 将所有被测试模块引入到 tests 模块；
+  + 用于 prelude 模式；
 
 
 

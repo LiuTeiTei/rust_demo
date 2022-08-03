@@ -62,3 +62,9 @@ pub fn eat_food() {
     // field `seasonal_fruit` of struct `back_of_house::Breakfast` is private
     // meal.seasonal_fruit = String::from("blueberries");
 }
+
+use std::fmt::Result;
+use std::io::Result as IoResult;
+
+fn f1(res: Result) {}
+fn f2(res: IoResult<()>) {}
