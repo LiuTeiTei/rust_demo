@@ -1993,22 +1993,7 @@ lib.rs
   }
   ```
 
-+ 可以使用 `super` 关键字来访问父 module 路径中的内容，类似于文件系统中以 `..` 开头的语法：
 
-  ```rust
-  fn serve_order() {}
-  
-  mod back_of_house {
-      fn fix_incorrect_order() {
-          cook_order();
-          super::serve_order();
-      }
-  
-      fn cook_order() {}
-  }
-  ```
-
-  
 
 ## Path
 
@@ -2033,6 +2018,63 @@ lib.rs
 + 选择使用相对路径还是绝对路径，取决于你的项目是更倾向于将项的定义代码与使用该项的代码分开来移动，还是一起移动。
 
 
+
+**super**
+
++ 可以使用 `super` 关键字来访问父 module 路径中的内容，类似于文件系统中以 `..` 开头的语法：
+
+  ```rust
+  fn serve_order() {}
+  
+  mod back_of_house {
+      fn fix_incorrect_order() {
+          cook_order();
+          super::serve_order();
+      }
+  
+      fn cook_order() {}
+  }
+  ```
+
+
+
+**use**
+
++ 可以使用 `use` 关键字将路径一次性引入作用域，然后调用该路径中的项，就如同它们是本地项一样：
+
+  ```rust
+  mod front_of_house {
+      pub mod hosting {
+          pub fn add_to_waitlist() {}
+      }
+  }
+  
+  use crate::front_of_house::hosting;
+  
+  pub fn eat_at_restaurant() {
+      hosting::add_to_waitlist();
+  }
+  ```
+
++ 也可以使用 `use` 和相对路径来将一个项引入作用域：
+
+  ```rust
+  use self::front_of_house::hosting;
+  
+  pub fn eat_at_restaurant() {
+      hosting::add_to_waitlist();
+  }
+  ```
+
++ 在作用域中增加 `use` 和路径类似于在文件系统中创建软连接；
+
++ 通过 `use` 引入作用域的路径也会检查私有性，同其它路径一样；
+
++ 习惯用法：
+
+  + 使用 `use` 将函数的父模块引入作用域，而不是直接引用到具体函数。这样可以清晰地表明函数不是在本地定义的，同时使完整路径的重复度最小化；
+  + 使用 `use` 引入结构体、枚举和其他项时，习惯是指定它们的完整路径；
+  + 
 
 
 
