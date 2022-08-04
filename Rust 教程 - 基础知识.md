@@ -2157,11 +2157,128 @@ lib.rs
 
 
 
+# 常见集合
+
++ Rust 标准库中包含一系列被称为集合的数据结构；
++ 不同于内建的数组和元组类型，这些集合指向的数据是储存在堆上的；
++ 这些数据的数量不必在编译时就已知，并且还可以随着程序的运行增长或缩小。
 
 
 
+## Vector
+
++ 由标准库提供；
++ 可以存储多个值；
++ 只能存储相同类型的数据；
++ 值在内存中连续存放。
 
 
+
+**创建 Vector**
+
++ 使用 `Vec::new()` 函数：
+
+  ```rust
+  let v1: Vec<i32> = Vec::new();
+  ```
+
++ 使用 `vec!` 宏：
+
+  ```rust
+  let v2 = vec![1, 2, 3];
+  ```
+
+
+
+**更新 Vector**
+
++ 使用 `push` 方法：
+
+  ```rust
+  let mut v3 = Vec::new();
+  v3.push(1);
+  ```
+
+  + Rust 可以结合上下文推导类型，因此无需在创建时显式声明类型。
+
+
+
+**删除 Vector**
+
++ 与 struct 类似，当 Vector 离开作用域后它就被清理掉了，内部所有元素也被清理掉了。
+
+
+
+**读取 Vector**
+
++ 索引：
+
+  ```rust
+  let third: &i32 = &v2[2];
+  ```
+
+  + 如果访问越界，在运行时会引起 panic。
+
++ `get` 方法：
+
+  ```rust
+  match v2.get(2) {
+      Some(third) => println!("The third element is {}", third),
+      None => println!("There is no third element"),
+  }
+  ```
+
+  + 如果访问越界，会返回 None。
+
++ 不能在同一个作用域内同时拥有可变和不可变引用：
+
+  ```rust
+  let mut v3 = vec![1];
+  let first = &v3[0];
+  // error[E0502]: cannot borrow `v3` as mutable because it is also borrowed as immutable
+  v3.push(2);
+  println!("The first element is {}", first)
+  ```
+
+  + 因为 vector 是连续存放的，当 vector 的结尾增加新元素时，可能没有足够空间将所有元素依次相邻存放，就会分配新内存并将老的元素拷贝到新的空间中，原有的内存会被释放；
+  + 这时，第一个元素的引用就指向了被释放的内存，此时使用就会有问题；
+  + 借用规则阻止程序陷入这种状况。
+
++ 使用 `for` 循环遍历：
+
+  ```rust
+  let mut v4 = vec![0, 1, 2];
+  for i in &mut v4 {
+      *i *= 10;
+  }
+  for i in &v4 {
+      println!("{}", i)
+  }
+  ```
+
+
+
+**使用枚举来储存多种类型**
+
++ vector 只能储存相同类型的值；
+
++ 枚举的成员都被定义为相同的枚举类型，所以当需要在 vector 中储存不同类型值时，可以定义并使用一个枚举：
+
+  ```rust
+  enum SpreadsheetCell {
+      Int(i32),
+      Float(f64),
+      Text(String),
+  }
+  let row = vec![
+      SpreadsheetCell::Int(16),
+      SpreadsheetCell::Text(String::from("black")),
+      SpreadsheetCell::Float(3.14),
+      SpreadsheetCell::Text(String::from("test")),
+  ];
+  ```
+
+  
 
 
 
