@@ -1112,6 +1112,7 @@ fn takes_and_gives_back(a_string: String) -> String {
 
 ## Slice 类型
 
++ 切片
 + slice 允许你引用集合中一段连续的元素序列，而不用引用整个集合；
 + slice 是一类引用，所以它没有所有权。
 
@@ -2280,7 +2281,148 @@ lib.rs
 
   
 
+## String
 
++ 由标准库提供，而不是核心语言层面；
+  + Rust 的核心语言中只有一种字符串类型：`str`，字符串 slice，它通常以 `&str` 被借用的形式出现。
++ Byte 的集合，是对 `Vec<u8>` 的包装；
++ 可增长、可变、有所有权、UTF-8 编码；
++ Rust 标准库中还包含一系列其他字符串类型，比如 `OsString`、`OsStr`、`CString` 和 `CStr`：
+  + String 后缀一般是拥有；
+  + Str 后缀一般是借用；
+  + 这些类型可存储不同编码的文本，或在内存中以不同的形式展示；
+  + 想关 Libary Crate 会提供更多储存字符串数据的选择。
+
+
+
+**创建 String**
+
++ 使用 `String::new()` 函数：
+
+  ```rust
+  let mut s1 = String::new();
+  ```
+
++ 使用初始值创建：
+
+  ```rust
+  // to_string() 方法
+  let data = "hello world";
+  let s2 = data.to_string();
+  let s3 = "hello world".to_string();
+  
+  // String::from() 函数
+  let s4 = String::from("hello world");
+  ```
+
+
+
+**更新 String**
+
++  `push_str` 方法，把一个**字符串切片**附加到 String：
+
+  ```rust
+  s1.push_str(data);
+  s1.push_str(&s4);
+  println!("{},{},{}", s1, data, s4);
+  ```
+
+  + 传入的参数是字符串切片类型，不会获得参数的所有权。
+
++ `push` 方法，把**单个字符**附加到 String：
+
+  ```rust
+  s1.push('l');
+  ```
+
++ `+` 运算符，连接字符串：
+
+  ```rust
+  let s5 = s2 + "_" + &s4 + "_" + data;
+  // error[E0382]: borrow of moved value: `s2`
+  // println!("{},{},{}", s1, data, s2);
+  ```
+
+  + 类似 `fn add(self, s: &str) -> String {}` 方法，第一个参数的所有权会被移动。
+
++ `format!` 宏，连接多个字符串：
+
+  ```rust
+  let s6 = format!("{}_{}_{}", s3, s4, data);
+  ```
+
+  + 不会取得任何参数的所有权。
+
+
+
+**String 内部表现**
+
++ String 没有实现整数索引接口，因为 String 是 UTF-8 编码，一个字符串字节值的索引并不总是对应一个有效的 Unicode 标量值：
+
+  ```rust
+  let len = String::from("三").len();
+  println!("{}", len); // 3
+  ```
+
++ Rust 有三种看待字符串的方式，字节 Bytes、标量值 Scalar Values 和字形簇 Crapheme Clusters：
+
+  ```rust
+  // 用梵文书写的印度语单词
+  let word = "नमस्ते";
+  
+  // 储存在 vector 中的 u8 值
+  [224, 164, 168, 224, 164, 174, 224, 164, 184, 224, 165, 141, 224, 164, 164, 224, 165, 135]
+  
+  // Unicode 标量值
+  ['न', 'म', 'स', '्', 'त', 'े']
+  
+  // 字形簇
+  ["न", "म", "स्", "ते"]
+  ```
+
+
+
+**切割 String**
+
++ 使用 `[]` 和一个范围来创建含特定字节的字符串切片 slice：
+
+  ```rust
+  let word = "नमस्ते";
+  let w1 = &word[0..3];
+  println!("{}", w1); // न
+  ```
+
+  + 这个范围是字节；
+
++ 必须沿着字符的边界切割，否则会 panic：
+
+  ```rust
+  let w1 = &word[0..2];
+  // thread 'main' panicked at 'byte index 2 is not a char boundary; it is inside 'न' (bytes 0..3) of `नमस्ते`'
+  println!("{}", w1);
+  ```
+
+
+
+**遍历 String**
+
++ 对于字节，`bytes` 方法：
+
+  ```rust
+  for b in "नमस्ते".bytes() {
+      println!("{}", b);
+  }
+  ```
+
++ 对于标量值，`chars` 方法：
+
+  ```rust
+  for c in "नमस्ते".chars() {
+      println!("{}", c);
+  }
+  ```
+
++ 对于字形簇，标准库未提供，可使用第三方库。
 
 
 

@@ -37,4 +37,28 @@ fn main() {
         SpreadsheetCell::Float(3.14),
         SpreadsheetCell::Text(String::from("test")),
     ];
+
+    let mut s1 = String::new();
+
+    let data = "hello world";
+    let s2 = data.to_string();
+    let s3 = "hello world".to_string();
+    let s4 = String::from("hello world");
+
+    s1.push_str(data);
+    s1.push_str(&s4);
+    println!("{},{},{}", s1, data, s4);
+
+    let s5 = s2 + "_" + &s4 + "_" + data;
+    // error[E0382]: borrow of moved value: `s2`
+    // println!("{},{},{}", s1, data, s2);
+
+    let s6 = format!("{}_{}_{}", s3, s4, data);
+
+    let len = String::from("三").len();
+    println!("{}", len); // 3
+
+    let word = "नमस्ते";
+    let w1 = &word[0..2];
+    println!("{}", w1); // न
 }
