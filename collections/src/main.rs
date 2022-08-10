@@ -59,6 +59,46 @@ fn main() {
     println!("{}", len); // 3
 
     let word = "नमस्ते";
-    let w1 = &word[0..2];
+    let w1 = &word[0..3];
     println!("{}", w1); // न
+
+    use std::collections::HashMap;
+
+    let mut scores = HashMap::new();
+    scores.insert(String::from("Blue"), 10);
+    scores.insert(String::from("Yellow"), 50);
+
+    let team = vec![String::from("blue"), String::from("yellow")];
+    let initial_scores = vec![10, 50];
+    let mut scores_collect: HashMap<_, _> =
+        team.into_iter().zip(initial_scores.into_iter()).collect();
+    println!("{:#?}", scores_collect);
+
+    let score = scores.get(&String::from("Blue"));
+    match score {
+        Some(s) => println!("{}", s),
+        None => println!("score not exist"),
+    }
+
+    for (k, v) in &scores {
+        println!("K: {}, V: {}", k, v);
+    }
+
+    scores.insert(String::from("Blue"), 10);
+    scores.insert(String::from("Blue"), 25);
+    println!("{:?}", scores); // {"Blue": 25}
+
+    let e = scores.entry(String::from("Pink"));
+    println!("{:?}", e); // Entry(VacantEntry("Pink"))
+    e.or_insert(100);
+    scores.entry(String::from("Blue")).or_insert(250);
+    println!("{:?}", scores); // {"Pink": 100, "Blue": 25}
+
+    let text = "hello world wonderful world";
+    let mut map = HashMap::new();
+    for word in text.split_whitespace() {
+        let count = map.entry(word).or_insert(0);
+        *count += 1;
+    }
+    println!("{:?}", map); // {"world": 2, "hello": 1, "wonderful": 1}
 }

@@ -2171,6 +2171,7 @@ lib.rs
 + 由标准库提供；
 + 可以存储多个值；
 + 只能存储相同类型的数据；
++ 数据存储在 Heap 上；
 + 值在内存中连续存放。
 
 
@@ -2426,7 +2427,132 @@ lib.rs
 
 
 
+## HashMap
+
++ `HashMap<K, V>` 类型储存了一个键类型 `K` 对应一个值类型 `V` 的映射；
++ 通过一个 Hask 函数来实现映射，决定如何将键和值放入内存中；
++ 适用于需要任何类型作为键来寻找数据的情况，而不是像 vector 那样通过索引；
++ 不在 Prelude 中，需要手动引入；
++ 标准库支持较少，没有内置的宏来创建 HashMap；
++ 数据存储在 Heap 上；
++ HashMap 是同构的，所有的 K 是同一个类型，所有的 V 是同一个类型。
 
 
 
+**创建 HashMap**
 
++ 使用 `HashMap::new()` 函数：
+
+  ```rust
+  use std::collections::HashMap;
+  
+  let mut scores = HashMap::new();
+  scores.insert(String::from("Blue"), 10);
+  ```
+
++ 使用 `collect` 方法：
+
+  ```rust
+  let team = vec![String::from("blue"), String::from("yellow")];
+  let initial_scores = vec![10, 50];
+  let mut scores_collect: HashMap<_, _> =
+      team.into_iter().zip(initial_scores.into_iter()).collect();
+  println!("{:#?}", scores_collect);
+  ```
+
+  + 在元素类型为 Tuple 的 Vector 上使用 `collect` 方法，可以组建一个 HashMap。要求 Tuple 有两个值，一个作为 K，一个作为 V；
+  + `collect` 方法可以将数据收集进一系列的集合类型，包括 HashMap，因此返回值需要显式指明类型。
+
+
+
+**HashMap 所有权**
+
++ 对于实现了 Copy trait 的类型，例如 i32，值会被复制到 HashMap 中；
++ 对于拥有所有权的值，例如 String，所有权会转移给 HashMap；
++ 如果将值的引用 insert 到 HashMap 中，值本身不会移动；
++ 在 HashMap 有效期间内，被引用的值必须保持有效。
+
+
+
+**读取 HashMap**
+
++ 使用 `get` 方法：
+
+  ```rust
+  let score = scores.get(&String::from("Blue"));
+  match score {
+      Some(s) => println!("{}", s),
+      None => println!("score not exist"),
+  };
+  ```
+
+  + 参数是 K，返回值是 `Option<&V>`；
+
++ for 循环遍历：
+
+  ```rust
+  for (k, v) in &scores {
+      println!("K: {}, V: {}", k, v);
+  }
+  ```
+
+  
+
+**更新 HashMap**
+
++ HashMap 大小可变；
+
++ 每个 K 同时只能对应一个 V；
+
++ 更新 HashMap 时 K 已经存在，可以选择：替换、保留、合并；
+
++ 更新 HashMap 时 K 不存在，直接添加一对 K 和 V；
+
++ K 相同 V 不同，替换现有的 V：
+
+  ```rust
+  scores.insert(String::from("Blue"), 10);
+  scores.insert(String::from("Blue"), 25);
+  
+  println!("{:?}", scores); // {"Blue": 25}
+  ```
+
++ 只在 K 没有对应 V 时插入：
+
+  ```rust
+  let e = scores.entry(String::from("Pink"));
+  println!("{:?}", e); // Entry(VacantEntry("Pink"))
+  e.or_insert(100);
+  
+  scores.entry(String::from("Blue")).or_insert(250);
+  println!("{:?}", scores); // {"Pink": 100, "Blue": 25}
+  ```
+
+  + `entry` 方法检查指定的 K 是否有对应的 V，输入 K，返回 enum Entry 表示值是否存在；
+  + `or_insert` 方法，
+    + 如果 K 存在，返回到对应的 V 的一个可变引用；
+    + 如果 K 不存在，将方法参数作为 K 的新值插进去，返回到这个值的可变引用。
+
++ 基于现有 V 更新 V：
+
+  ```rust
+  let text = "hello world wonderful world";
+  
+  let mut map = HashMap::new();
+  
+  for word in text.split_whitespace() {
+      let count = map.entry(word).or_insert(0);
+      *count += 1;
+  }
+  
+  println!("{:?}", map); // {"world": 2, "hello": 1, "wonderful": 1}
+  ```
+
+
+
+**Hash 函数**
+
++ `HashMap` 默认使用一种叫做 SipHash 的哈希函数，可以抵抗拒绝服务 DoS 攻击；
++ 不是可用的最快的算法，但具有更好的安全性；
++ 指定一个不同的 hasher 来切换为其它函数；
++ hasher 是一个实现了 `BuildHasher` trait 的类型。
