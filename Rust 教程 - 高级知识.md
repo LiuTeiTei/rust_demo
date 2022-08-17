@@ -43,8 +43,6 @@
 
 ## Result 枚举
 
-**定义**
-
 + 和 Option 枚举一样，Result 及其变体由 prelude 导入作用域；
 
   ```rust
@@ -71,7 +69,7 @@
 
 
 
-使用 match 表达式处理 Result
+**使用 match 表达式处理 Result**
 
 + 匹配：
 
@@ -137,3 +135,82 @@
   ```
 
   + 与 unwrap 类似，但能指定错误信息。
+
+
+
+## 传播错误
+
++ 当编写一个可能会失败的函数时，除了在这个函数中处理错误外，还可以选择让调用者知道这个错误并决定该如何处理：
+
+  ```rust
+  use std::fs::File;
+  use std::io::Read;
+  
+  fn read_username_from_file() -> Result<String, io::Error> {
+      let f = File::open("hello.txt");
+  
+      let mut f = match f {
+          Ok(file) => file,
+          Err(e) => return Err(e),
+      };
+  
+      let mut s = String::new();
+  
+      match f.read_to_string(&mut s) {
+          Ok(_) => Ok(s),
+          Err(e) => Err(e),
+      }
+  }
+  
+  fn main() {
+    read_username_from_file()
+  }
+  ```
+
+  + `fs::read_to_string` 的函数：将文件读取到一个字符串。它会打开文件、新建一个 String、读取文件的内容，并将内容放入 String，接着返回它。
+
++ `?` 运算符是传播错误的一种简写：
+
+  ```rust
+  fn read_username_from_file() -> Result<String, io::Error> {
+      let mut f = File::open("hello.txt")?;
+      let mut s = String::new();
+      f.read_to_string(&mut s)?;
+      Ok(s)
+  }
+  ```
+
+  + 如果 `Result` 的值是 `Ok`，这个表达式将会返回 `Ok` 中的值而程序将继续执行；
+  + 如果值是 `Err`，`Err` 中的值将作为整个函数的返回值，就好像使用了 `return` 关键字一样，这样错误值就被传播给了调用者。
+
++ 可以在 `?` 之后直接使用链式方法调用：
+
+  ```rust
+  fn read_username_from_file() -> Result<String, io::Error> {
+      let mut s = String::new();
+      File::open("hello.txt")?.read_to_string(&mut s)?;
+      Ok(s)
+  }
+  ```
+
++ `?` 运算符只能用于返回 Result 的函数；
+
+  + 被 `?` 所应用的错误，会隐式被 from 函数处理；
+  + 当 `?` 调用 from 时，它所接收的错误类型会被转化为当前函数返回类型所定义的错误类型；
+  + form 函数是一个 trait，由 std::convert::From 提供；
+  + 只要每个错误类型实现了转换为所返回的错误类型的 from 函数，就可以针对不同错误原因返回同一种错误类型；
+
++ main 函数返回类型是 `()`，不能直接使用`?` 运算符：
+
+  ```rust
+  use std::error::Error;
+  use std::fs::File;
+  
+  fn main() -> Result<(), Box<dyn Error>> {
+      let f = File::open("hello.txt")?;
+      Ok(())
+  }
+  ```
+
+  + main 函数返回类型也可以是 Result<T, E>；
+  + `Box<dyn Error>` 是 trait 对象，任何可能的错误类型。
