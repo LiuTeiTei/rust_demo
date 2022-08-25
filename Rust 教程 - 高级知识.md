@@ -214,3 +214,152 @@
 
   + main 函数返回类型也可以是 Result<T, E>；
   + `Box<dyn Error>` 是 trait 对象，任何可能的错误类型。
+
+
+
+# 泛型
+
++ 可以提高代码的复用能力，处理重复代码问题；
++ 泛型是具体类型或其他属性的抽象替代。可以简单理解为，带泛型的代码不是最终的代码，而是一种模板，里面有一些占位符，编译器再编译时会将占位符替换成具体的类型；
++ 使用泛型的代码和使用具体类型的代码运行速度时一样的，Rust 在编译时会进行单态化；
+  + 单态化：编译时将泛型替换成具体类型的过程。
++ 一般使用 `T` 作为泛型数据类型，表示 Type。
+
+
+
+## 函数
+
++ 一般将参数类型和返回类型定义为 `T`：
+
+  ```rust
+  fn largest<T: std::cmp::PartialOrd>(list: &[T]) -> &T {
+      let mut largest = &list[0];
+  
+      for item in list {
+          if item > largest {
+              largest = item
+          }
+      }
+  
+      largest
+  }
+  
+  fn main() {
+      let number_list = vec![1, 2, 35, 9, 444];
+      let largest_number = largest(&number_list);
+      println!("the largest number is {}", largest_number);
+  
+      let char_list = vec!['y', 'm', 'a', 'q'];
+      let largest_char = largest(&char_list);
+      println!("The largest char is {}", largest_char);
+  }
+  ```
+
+  
+
+## Struct
+
++ 一般将字段定义为 `T`：
+
+  ```rust
+  struct Point<T> {
+      x: T,
+      y: T,
+  }
+  
+  fn main() {
+      let integer = Point { x: 5, y: 10 };
+      let float = Point { x: 1.0, y: 4.0 };
+  }
+  ```
+
++ 也可以定义不同类型但仍然是泛型的 `Point` 结构体：
+
+  ```rust
+  struct Point<T, U> {
+      x: T,
+      y: U,
+  }
+  
+  fn main() {
+      let both_integer = Point { x: 5, y: 10 };
+      let both_float = Point { x: 1.0, y: 4.0 };
+      let integer_and_float = Point { x: 5, y: 4.0 };
+  }
+  ```
+
+
+
+## Enum
+
++ 将枚举的变体定义为 `T`：
+
+  ```rust
+  enum Option<T> {
+      Some(T),
+      None,
+  }
+  ```
+
++ 枚举也可以拥有多个泛型类型：
+
+  ```rust
+  enum Result<T, E> {
+      Ok(T),
+      Err(E),
+  }
+  ```
+
+
+
+## 方法
+
++ 为 struct 或 enum 实现方法时，可以在定义中使用泛型；
+
++ 把  `T` 放在 impl 关键字后，表示在类型 `T` 上实现方法：
+
+  ```rust
+  impl<T> Point<T> {
+      fn x(&self) -> &T {
+          &self.x
+      }
+  }
+  ```
+
++ 也可以只针对具体类型实现方法：
+
+  ```rust
+  impl Point<f32> {
+      fn distance_from_origin(&self) -> f32 {
+          (self.x.powi(2) + self.y.powi(2)).sqrt()
+      }
+  }
+  ```
+
++ struct 中的泛型类型参数可以和方法的泛型类型参数不同：
+
+  ```rust
+  struct Point<X1, Y1> {
+      x: X1,
+      y: Y1,
+  }
+  
+  impl<X1, Y1> Point<X1, Y1> {
+      fn mixup<X2, Y2>(self, other: Point<X2, Y2>) -> Point<X1, Y2> {
+          Point {
+              x: self.x,
+              y: other.y,
+          }
+      }
+  }
+  
+  fn main() {
+      let p1 = Point { x: 5, y: 10.4 };
+      let p2 = Point { x: "Hello", y: 'c' };
+      let p3 = p1.mixup(p2);
+  
+      println!("p3.x = {}, p3.y = {}", p3.x, p3.y);
+  }
+  ```
+
+  
