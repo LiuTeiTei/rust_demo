@@ -362,4 +362,117 @@
   }
   ```
 
+
+
+# Trait
+
++ trait 告诉 Rust 编译器某个特定类型拥有可能与其他类型共享的功能；
++ 可以通过 trait 以一种抽象的方式定义共享的行为；
++ 可以使用 trait bounds 指定泛型是任何拥有特定行为的类型。
+
+
+
+## 定义 trait
+
++ trait 定义，是把方法签名组合起来放在一起，来定义一个实现某些目的所必需的一组行为；
+
++ 使用 `trait` 关键字来声明一个 trait，后面跟着 trait 的名字：
+
+  ```rust
+  pub trait Summary {
+      fn summarize(&self) -> String;
+  }
+  ```
+
++ trait 体中可以有多个方法，每个方法签名占一行，且以 `;` 结尾；
+
++ 定义的时候，可以只有方法签名，没有具体实现；
+
++ 实现该 trait 的类型必须提供具体的方法实现。
+
+
+
+## 实现 trait
+
++ 也是使用 `impl` 关键字，但与为类型实现方法不太一样：
+
+  ```rust
+  // 为类型实现方法
+  impl <类型名> {
+    // 函数具体实现
+  }
+  
+  // 
+  impl <Trait名> for <类型名> {
+    // 函数签名
+  }
+  ```
+
++ trait 必须和类型一起引入作用域以便使用额外的 trait 方法：
+
+  ```rust
+  // lib.rs
+  pub trait Summary {
+      fn summarize(&self) -> String;
+  }
+  
+  pub struct NewsArticle {
+      pub headline: String,
+      pub location: String,
+      pub author: String,
+      pub content: String,
+  }
+  
+  // 定义关联函数
+  impl NewsArticle {
+      pub fn summarize(article: NewsArticle) -> String {
+          format!("{}: {}", article.author, article.content)
+      }
+  }
+  
+  // 定义 trait
+  impl Summary for NewsArticle {
+      fn summarize(&self) -> String {
+          format!("{}, by {} ({})", self.headline, self.author, self.location)
+      }
+  }
+  
+  pub struct Tweet {
+      pub username: String,
+      pub content: String,
+      pub reply: bool,
+      pub retweet: bool,
+  }
+  
+  impl Summary for Tweet {
+      fn summarize(&self) -> String {
+          format!("{}: {}", self.username, self.content)
+      }
+  }
+  ```
+
+  ```rust
+  // main.rs
+  use trait_demo::{NewsArticle, Summary, Tweet};
+  
+  fn main() {
+      let tweet = Tweet {
+          username: String::from("username"),
+          content: String::from("content"),
+          reply: false,
+          retweet: false,
+      };
+      println!("tweet: {}", tweet.summarize()); // tweet: username: content
+  
+      let article = NewsArticle {
+          headline: String::from("headline"),
+          location: String::from("location"),
+          author: String::from("author"),
+          content: String::from("content"),
+      };
+      println!("article {}", article.summarize()); // article headline, by author (location)
+      println!("article {}", NewsArticle::summarize(article)); // article author: content
+  }
+  ```
+
   
