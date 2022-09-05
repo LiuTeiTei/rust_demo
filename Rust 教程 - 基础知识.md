@@ -1268,7 +1268,7 @@ let slice = &a[1..3];
 + 例子：
 
   ```rust
-  struct Use {
+  struct User {
       active: bool,
       username: String,
       email: String,

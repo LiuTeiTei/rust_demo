@@ -50,11 +50,17 @@ fn main() {
     let largest_char = largest(&char_list);
     println!("The largest char is {}", largest_char);
 
+    let str_list = vec![String::from("hello"), String::from("word")];
+    let largest_string = largest(&str_list);
+    println!("The largest string is {}", largest_string);
+
     let integer = Point { x: 10, y: 20 };
     let float = Point { x: 10.0, y: 20.0 };
     let integer_float = MixPoint { x: 10, y: 20.0 };
     println!("p.x={}", integer.x());
     println!("p.y={}", float.y());
+    println!("p.xy={}", integer_float.x);
+
     let p1 = MixPoint { x: 5, y: 10.4 };
     let p2 = MixPoint { x: "Hello", y: 'c' };
     let p3 = p1.mixup(p2);
