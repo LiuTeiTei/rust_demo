@@ -707,11 +707,112 @@
 + 测试函数需要使用 test 属性进行标注；
   + 属性 attribute 是一段 Rust 代码片段的元数据；
   + 在函数上加 `#[test]` 就可以把函数变成测试函数。
-+ 开启测试：
++ 运行测试：
   + 使用 `cargo test` 命令会运行所有的测试函数；
+  
   + Rust 会构建一个 Test Runner 可执行文件，会运行标注了 test 的函数，并报告其运行是否成功；
-  + 当使用 cargo 创建 libary 项目的时候，会生成一个 test module，里面有一个 test 函数；
+  
+  + 当使用 cargo 创建 libary 项目的时候，会生成一个 test module，里面有一个 test 函数：
+  
+    ```rust
+    #[cfg(test)]
+    mod tests {
+        #[test]
+        fn it_works() {
+            let result = 2 + 2;
+            assert_eq!(result, 4);
+        }
+    }
+    ```
+  
   + 可以在项目中添加任意数量的 test module 或测试函数。
 + 测试失败：
-  + 测试函数触发了 panic 就表示失败；
+  + 测试函数触发了 `panic!` 就表示失败：
+  
+    ```rust
+    #[test]
+      fn error() {
+          panic!("Make this test fail");
+      }
+    ```
+  
   + 每个测试运行在一个独立的线程中，当主线程看到某个测试线程挂了，就将那个测试标记为失败。
+
+
+
+## assert 断言
+
++ 使用 `assert!` 宏来检查结果：
+
+  + 由标准库提供，用来确定某个状态是否为 `true`；
+
+  + true：测试通过；
+
+  + false：调用 `panic!` 宏，测试失败；
+
+  + 例子：
+
+    ```rust
+    struct Rectangle {
+        width: u32,
+        hight: u32,
+    }
+    
+    impl Rectangle {
+        fn can_hold(&self, other: Rectangle) -> bool {
+            self.width > other.width && self.hight > other.hight
+        }
+    }
+    
+    #[cfg(test)]
+    mod tests {
+        use super::*;
+        
+        #[test]
+        fn larger_can_hold_small() {
+            let lager = Rectangle { width: 8, hight: 7 };
+            let small = Rectangle { width: 5, hight: 1 };
+            assert!(lager.can_hold(small))
+        }
+    
+        #[test]
+        fn larger_cannot_hold_small() {
+            let lager = Rectangle { width: 8, hight: 7 };
+            let small = Rectangle { width: 5, hight: 1 };
+            assert!(!small.can_hold(lager))
+        }
+    }
+    ```
+
++ 使用 `assert_eq!` 和 `assert_ne!` 宏来测试相等：
+
+  + 由标准库提供，用来确定两个参数是否相等或不等；
+
+  + 实际上使用的就是 `==` 和 `!=`；
+
+  + 断言失败失败时会自动打印出两个参数的值；
+
+    + 使用 debug 格式打印参数；
+    + 因此要求参数需要实现 `PartialEq` 和 `Debug` Traits；
+    + 所有的基本类型和大部分标准库类型都实现了这些 Trait，对于自定义的结构体和枚举，需要实现 `PartialEq` 才能断言他们的值是否相等；需要实现 `Debug` 才能在断言失败时打印他们的值。
+
+  + 例子：
+
+    ```rust
+    pub fn add_two(a: i32) -> i32 {
+        a + 2
+    }
+    
+    #[cfg(test)]
+    mod tests {
+        use crate::add_two;
+    
+        #[test]
+        fn it_add_two() {
+            assert_eq!(4, add_two(2));
+            assert_ne!(4, add_two(2));
+        }
+    }
+    ```
+
+    
