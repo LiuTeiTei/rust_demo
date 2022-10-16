@@ -815,4 +815,134 @@
     }
     ```
 
++ 添加自定义错误信息：
+
+  + 可以向 `assert!`、`assert_eq!` 和 `assert_ne!` 宏传递一个可选的失败信息参数；
+
+  + 在测试失败时这些自定义信息和失败信息会一同打印出来；
+
+  + `assert!` 第一个参数是必填的，自定义信息是可选的第二个参数；
+
+  + `assert_eq!` 和 `assert_ne!` 的前两个参数数必填的，自定义信息是可选的第三个参数；
+
+  + 自定义参数会被传递给 `format!` 宏，可以使用 `{}` 占位符；
+
+  + 例子：
+
+    ```rust
+    pub fn greeting(name: &str) -> String {
+        String::from("Hello!")
+    }
     
+    #[cfg(test)]
+    mod tests {
+        use super::*;
+    
+        #[test]
+        fn greeting_contains_name() {
+            let result = greeting("Carol");
+            assert!(
+                result.contains("Carol"),
+                "Greeting did not contain name, value was `{}`",
+                result
+            );
+        }
+    }
+    ```
+
+
+
+## 验证错误处理
+
++ 除了检查代码是否返回期望的正确的值之外，有时还需要检查代码是否按照期望处理错误；
+
++ 使用 should_panic 检查 panic：
+
+  + 函数 panic 则测试通过；
+
+  + 函数没有 panic 则测试失败；
+
+  + 例子：
+
+    ```rust
+    pub struct Guess {
+        value: i32,
+    }
+    
+    impl Guess {
+        pub fn new(value: i32) -> Guess {
+            if value < 1 {
+                panic!(
+                    "Guess value must be greater than or equal to 1, got {}.",
+                    value
+                );
+            } else if value > 100 {
+                panic!(
+                    "Guess value must be less than or equal to 100, got {}.",
+                    value
+                );
+            }
+    
+            Guess { value }
+        }
+    }
+    
+    #[cfg(test)]
+    mod tests {
+        use super::*;
+    
+        #[test]
+        #[should_panic]
+        fn greater_than_100() {
+            Guess::new(200);
+        }
+    }
+    ```
+
++ 为了使 `should_panic` 测试结果更精确，可以给 `should_panic` 属性增加一个可选的 `expected` 参数：
+
+  + 将检查错误信息中是否包含传入的参数文本；
+
+  + 例子：
+
+    ```rust
+    #[cfg(test)]
+    mod tests {
+        use super::*;
+    
+        #[test]
+        #[should_panic(expected = "Guess value must be less than or equal to 100")]
+        fn greater_than_100() {
+            Guess::new(200);
+        }
+    }
+    ```
+
+
+
+## 将 Result<T, E> 用于测试
+
++ 无需 panic，可使用 Result<T, E> 作为返回类型编写测试：
+
+  + 返回 Ok 测试通过；
+  + 返回 Err 测试失败；
+
++ 无需在测试函数上标注 `should_panic`；
+
++ 例子：
+
+  ```rust
+  #[cfg(test)]
+  mod tests {
+      #[test]
+      fn it_works() -> Result<(), String> {
+          if 2 + 2 == 4 {
+              Ok(())
+          } else {
+              Err(String::from("two plus two does not equal four"))
+          }
+      }
+  }
+  ```
+
+  
