@@ -1057,4 +1057,47 @@
 
 ### 集成测试
 
-+ 集成测试位于另一个文件夹，所以它们并不需要 `#[cfg(test)]` 注解
++ 集成测试完全位于被测试库外的另一个文件夹；
+
++ 集成测试的目的是测试库的多个部分能否一起正常工作；
+
++ 一些单独能正确运行的代码单元集成在一起也可能会出现问题，所以集成测试的覆盖率也是很重要的；
+
++ *tests* 目录：
+
+  + 需要在项目根目录创建一个 *tests* 目录，与 *src* 同级；
+
+  + *tests* 目录下的每一个测试文件都会被 Rust 当作单独的 crate 来编译，需要将被测试库导入；
+
+  + 不需要 `#[cfg(test)]` 注解，*tests* 目录会被特殊对待，只有在运行 `cargo test` 的时候才会编译 *tests* 目录下的文件；
+
+  + 例子：
+
+    ```rust
+    use automated_test;
+    
+    #[test]
+    fn it_add_two() {
+        assert_eq!(4, automated_test::add_two(2));
+    }
+    ```
+
++ 运行指定的集成测试：
+
+  + 运行一个特定的集成测试：`cargo test 函数名`；
+  + 运行某个测试文件内的所有测试：`cargo test --test 文件名`；
+
++ 集成测试中的子模块：
+
+  + *tests* 目录下每个文件会被编译成单独的 crate；
+  + *tests* 目录中的文件不能像 *src* 中的文件那样共享相同的行为；
+  + 可以创建 *tests/common/mod.rs* 不是创建 *tests/common.rs*，这是一种 Rust 的命名规范，这样命名告诉 Rust 不要将 `common` 看作一个集成测试文件；
+  + *tests* 目录中的子目录不会被作为单独的 crate 编译或作为一个测试结果部分出现在测试输出中；
+
++ 针对 binary crate 的集成测试：
+
+  + 如果项目是 binary crate 并且只包含 *src/main.rs* 而没有 *src/lib.rs*：
+    + 不能在 *tests* 目录下创建集成测试；
+    + 无法把 *src/main.rs* 中定义的函数导入作用域；
+  + 只有 libary crate 才能向其他 crate 暴露函数；
+  + binary crate 意味着单独运行。
