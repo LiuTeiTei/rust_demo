@@ -230,5 +230,183 @@
 
 
 
+## 迭代器 Iterator
 
++ 迭代器模式：对一系列项进行某些处理；
+
++ 迭代器负责遍历每一项和决定遍历何时结束；
+
++ Rust 中迭代器是惰性的：除非调用消费迭代器的方法，否则迭代器本身没有任何效果；
+
++ 简单例子：
+
+  ```rust
+  fn main() {
+      let v1 = vec![1, 2, 3];
+      let v1_iter = v1.iter();
+  
+      for value in v1_iter {
+          println!("Got {}", value)
+      }
+  }
+  ```
+
+
+
+### Iterator trait & next
+
++ 所有迭代器都实现了 Iterator trait；
+
++ Iterator trait 定义于标准库：
+
+  ```rust
+  pub trait Iterator {
+      type Item;
+      fn next(&mut self) -> Option<Self::Item>;
+      // 此处省略了方法的默认实现
+  }
+  ```
+
+  + `type Item` 和 `Self::Item` 定义了 trait 的关联类型；
+  + 实现 Iterator trait 需要定义一个 `Item` 类型，这个 `Item` 类型被用作 `next` 方法的返回值类型，也就是迭代器的返回类型。
+
++ Iterator trait 仅要求实现一个 `next` 方法：
+
+  + 每次返回迭代器中的一项；
+
+  + 返回结果包裹在 Some 中；
+
+  + 迭代结束，返回 None；
+
+  + 可以直接在迭代器上调用 `next` 方法：
+
+    ```rust
+    #[test]
+    fn iterator_demonstration() {
+        let v1 = vec![1, 2, 3];
+        let mut v1_iter = v1.iter();
+    
+        assert_eq!(v1_iter.next(), Some(&1));
+        assert_eq!(v1_iter.next(), Some(&2));
+        assert_eq!(v1_iter.next(), Some(&3));
+        assert_eq!(v1_iter.next(), None);
+    }
+    ```
+
++ 常用迭代方法：
+
+  + `iter` 方法：在不可变引用上创建迭代器；
+  + `into_iter` 方法：创建的迭代器会获得所有权；
+  + `iter_mut` 方法：迭代可变的引用。
+
+
+
+### 消耗迭代器
+
++ 在标准库中，Iterator trait 默认实现了一下方法，其中一些方法会使用到 `next` 方法，因此实现 Iterator trait 时必须实现 `next` 方法；
+
++ 调用 `next` 的方法叫做**消耗型迭代器**；
+
+  + 因为调用这些方法会把迭代器消耗殆尽。
+
++ 例如 `sum` 方法，会取得迭代器的所有权，通过反复调用 `next` 方法遍历所有元素。每次迭代，把当前元素添加到一个总和中，迭代结束返回总和：
+
+  ```rust
+  #[test]
+  fn iterator_sum() {
+      let v1 = vec![1, 2, 3];
+      let sum: i32 = v1.iter().sum();
+  
+      assert_eq!(sum, 6);
+  }
+  ```
+
++ 例如 `collect` 方法，会将结果收集到指定集合类型中。
+
+
+
+### 产生迭代器
+
++ 定义在 Iterator trait 上的另外一些方法叫做**迭代器适配器**；
+  + 把迭代器转换为不同类型的迭代器；
+  + 可以通过链式调用使用多个迭代器适配器来完成复杂操作，且可读性高。
+  
++ 例如 `map` 方法，接收一个闭包，闭包作用于每个元素，最后产生一个新的迭代器：
+
+  ```rust
+  #[test]
+  fn iterator_map() {
+      let v1 = vec![1, 2, 3];
+      let v2: Vec<_> = v1.iter().map(|x| x + 1).collect();
+  
+      assert_eq!(v2, vec![2, 3, 4]);
+  }
+  ```
+
+
+
+### 使用闭包捕获上下文
+
++ `filter` 方法：
+
+  + 是迭代器适配器的一种，接收一个闭包；
+
+  + 这个闭包在遍历迭代器的每个元素时返回 bool 类型；
+
+  + 如果闭包返回 ture，当前元素将会包含在 `filter` 产生的迭代器中；
+
+  + 如果闭包返回 false，当前元素将不会包含在 `filter` 产生的迭代器中；
+
+  + ```rust
+    #[derive(PartialEq, Debug)]
+    struct Shoe {
+        size: u32,
+        style: String,
+    }
+    
+    fn shoes_in_size(shoes: Vec<Shoe>, shoe_size: u32) -> Vec<Shoe> {
+        shoes.into_iter().filter(|s| s.size == shoe_size).collect()
+    }
+    
+    #[cfg(test)]
+    mod tests {
+        use super::*;
+    
+        #[test]
+        fn filters_by_size() {
+            let shoes = vec![
+                Shoe {
+                    size: 10,
+                    style: String::from("sneaker"),
+                },
+                Shoe {
+                    size: 13,
+                    style: String::from("sandal"),
+                },
+                Shoe {
+                    size: 10,
+                    style: String::from("boot"),
+                },
+            ];
+    
+            let in_my_size = shoes_in_size(shoes, 10);
+    
+            assert_eq!(
+                in_my_size,
+                vec![
+                    Shoe {
+                        size: 10,
+                        style: String::from("sneaker")
+                    },
+                    Shoe {
+                        size: 10,
+                        style: String::from("boot")
+                    },
+                ]
+            );
+        }
+    }
+    ```
+
+    
 
