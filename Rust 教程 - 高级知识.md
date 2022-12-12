@@ -408,5 +408,68 @@
     }
     ```
 
-    
+
+
+
+### 创建自定义迭代器
+
++ 实现 `next` 方法；
+
++ ```rust
+  struct Counter {
+      count: u32,
+  }
+  
+  impl Counter {
+      fn new() -> Counter {
+          Counter { count: 0 }
+      }
+  }
+  
+  impl Iterator for Counter {
+      type Item = u32;
+      fn next(&mut self) -> Option<Self::Item> {
+          if self.count < 5 {
+              self.count += 1;
+              Some(self.count)
+          } else {
+              None
+          }
+      }
+  }
+  
+  #[cfg(test)]
+  mod test2 {
+      use super::*;
+  
+      #[test]
+      fn calling_next_directly() {
+          let mut couter = Counter::new();
+          assert_eq!(couter.next(), Some(1));
+          assert_eq!(couter.next(), Some(2));
+          assert_eq!(couter.next(), Some(3));
+          assert_eq!(couter.next(), Some(4));
+          assert_eq!(couter.next(), Some(5));
+          assert_eq!(couter.next(), None);
+      }
+  
+      #[test]
+      fn using_other_iterator_trait_methods() {
+          let sum: u32 = Counter::new()
+              .zip(Counter::new().skip(1))
+              .map(|(a, b)| a * b)
+              .filter(|x| x % 3 == 0)
+              .sum();
+          assert_eq!(sum, 18);
+      }
+  }
+  ```
+
+
+
+### 性能比较
+
++ 零开销抽象（zero-cost abstractions）：
+  + 使用抽象时不会引入额外的性能开销；
+  + 迭代器是其中之一。
 
